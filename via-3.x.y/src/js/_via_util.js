@@ -200,6 +200,7 @@ function _via_util_infer_file_type_from_filename(filename) {
   case 'jpeg':
   case 'png':
   case 'bmp':
+  case 'svg':
     return _VIA_FILE_TYPE.IMAGE;
     break;
   case 'mp3':
