@@ -1615,7 +1615,7 @@ _via_file_annotator.prototype._creg_draw_file_label = function() {
 _via_file_annotator.prototype._creg_draw = function(mid) {
   if(this.show_region_shape) {
     var is_selected = this.selected_mid_list.includes(mid);
-    this._draw(this.rshapectx, this.creg[mid], is_selected)
+    this._draw(this.rshapectx, this.creg[mid], is_selected);
   }
 }
 
@@ -1623,21 +1623,26 @@ _via_file_annotator.prototype._creg_draw_label = function(mid) {
   if(!this.show_region_label) {
     return;
   }
-  
-  if ( this.d.store.metadata[mid].av.hasOwnProperty(this.d.store.config.ui['spatial_region_label_attribute_id']) ) {
+
+  const label_aid = this.d.store.config.ui['spatial_region_label_attribute_id']
+  if ( this.d.store.metadata[mid].av.hasOwnProperty(label_aid) ) {
     var lx = this.creg[mid][1];
     var ly = this.creg[mid][2];
 
     var label = '';
-    switch(this.d.store.attribute[this.d.store.config.ui['spatial_region_label_attribute_id']].type) {
+    switch(this.d.store.attribute[label_aid].type) {
     case _VIA_ATTRIBUTE_TYPE.RADIO:
     case _VIA_ATTRIBUTE_TYPE.SELECT:
     case _VIA_ATTRIBUTE_TYPE.CHECKBOX:
-      var option_id = this.d.store.metadata[mid].av[this.d.store.config.ui['spatial_region_label_attribute_id']];
-      label = this.d.store.attribute[this.d.store.config.ui['spatial_region_label_attribute_id']].options[option_id];
+      var option_id = this.d.store.metadata[mid].av[label_aid];
+      if ( this.d.store.attribute[label_aid].options.hasOwnProperty(option_id) ) {
+        label = this.d.store.attribute[label_aid].options[option_id];
+      } else {
+        label = option_id;
+      }
       break;
     case _VIA_ATTRIBUTE_TYPE.TEXT:
-      label = this.d.store.metadata[mid].av[this.d.store.config.ui['spatial_region_label_attribute_id']];
+      label = this.d.store.metadata[mid].av[label_aid];
       break;
     }
 
@@ -1650,21 +1655,22 @@ _via_file_annotator.prototype._creg_draw_label = function(mid) {
 
     //this.rshapectx.shadowColor = 'transparent';
     this.rshapectx.font = _VIA_SPATIAL_REGION_LABEL_FONT;
+    const metrics = this.rshapectx.measureText(label);
     var cw = this.rshapectx.measureText('M').width;
     var ch = 1.8 * cw;
-    var bgnd_rect_width = cw * (label.length);
+    var bgnd_rect_width = metrics.width + 1.6*cw;
     if ( label.length === 1 ) {
       bgnd_rect_width = 2*bgnd_rect_width;
     }
 
     // draw background rectangle
-    this.rshapectx.fillStyle = 'black';
+    this.rshapectx.fillStyle = '#333333';
     this.rshapectx.fillRect(Math.floor(lx),
                             Math.floor(ly - 1.1*ch),
                             Math.floor(bgnd_rect_width),
                             Math.floor(ch));
     // then, draw text over this background rectangle
-    this.rshapectx.fillStyle = 'yellow';
+    this.rshapectx.fillStyle = '#f2f2f2';
     this.rshapectx.fillText(label,
                             Math.floor(lx + 0.5*cw),
                             Math.floor(ly - 0.35*ch));
