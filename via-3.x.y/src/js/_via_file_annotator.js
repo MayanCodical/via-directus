@@ -2970,6 +2970,30 @@ _via_file_annotator.prototype._metadata_attribute_io_html_element = function(mid
       }
       el.appendChild(oi);
     }
+
+    // gather all options dynamically added by user and show in
+    // dropdown (feature requested by EpicKitchens team at Bristol)
+    var user_added_options = [];
+    for ( var mid in this.d.store.metadata ) {
+      if ( aid in this.d.store.metadata[mid]['av'] ) {
+        var ovalue = this.d.store.metadata[mid]['av'][aid];
+        if ( !user_added_options.includes(ovalue) ) {
+          user_added_options.push(ovalue);
+        }
+      }
+    }
+    user_added_options.sort();
+    for ( var i = 0; i<user_added_options.length; ++i) {
+      var oi = document.createElement('option');
+      oi.setAttribute('value', user_added_options[i]);
+      oi.innerHTML = user_added_options[i];
+      if ( user_added_options[i] === aval ) {
+        oi.setAttribute('selected', 'true');
+        option_selected = true;
+      }
+      el.appendChild(oi);
+    }
+
     if(!option_selected) {
       el.selectedIndex = -1; // to indicate that nothing has been selected
     }
