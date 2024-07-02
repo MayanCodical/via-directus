@@ -55,7 +55,7 @@
 
 "use strict";
 
-var VIA_VERSION      = '1.0.6';
+var VIA_VERSION      = '1.0.7';
 var VIA_NAME         = 'VGG Image Annotator';
 var VIA_SHORT_NAME   = 'VIA';
 var VIA_REGION_SHAPE = { RECT:'rect',

@@ -1,3 +1,6 @@
+## [1.0.7] - July 02, 2024
+ * add spacing between buttons using margin (not padding) to avoid issues as reported in issue #451
+
 ## [1.0.6] - June 15, 2018
  * a patch from Stefan Mihaila which requires polygon shape to have at least 3 points.
  * rectangles can now be resized from edges
