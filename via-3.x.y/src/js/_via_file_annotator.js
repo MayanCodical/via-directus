@@ -38,7 +38,7 @@ function _via_file_annotator(view_annotator, data, vid, file_label, container) {
   this.resize_selected_mid_index = -1;
   this.show_region_shape = true;
   this.show_region_label = true;
-  
+
   // canvas regions
   this.creg = {}; // canvas regions
   this.selected_mid_list = [];
@@ -1615,7 +1615,15 @@ _via_file_annotator.prototype._creg_draw_file_label = function() {
 _via_file_annotator.prototype._creg_draw = function(mid) {
   if(this.show_region_shape) {
     var is_selected = this.selected_mid_list.includes(mid);
-    this._draw(this.rshapectx, this.creg[mid], is_selected);
+    var boundary_color = this.conf.REGION_BOUNDARY_COLOR;
+    if ( this.va.temporal_segmenter) {
+      if ( this.d.store.metadata[mid]['av'].hasOwnProperty(this.va.temporal_segmenter.groupby_aid) ) {
+        const gid = this.d.store.metadata[mid]['av'][this.va.temporal_segmenter.groupby_aid];
+        const gindex = this.va.temporal_segmenter.gid_list.indexOf(gid);
+        boundary_color = this.va.temporal_segmenter.COLOR_LIST[ gindex % this.va.temporal_segmenter.NCOLOR ];
+      }
+    }
+    this._draw(this.rshapectx, this.creg[mid], is_selected, boundary_color);
   }
 }
 
@@ -2308,34 +2316,34 @@ _via_file_annotator.prototype._tmpreg_clear = function() {
 // region draw routines
 //
 // Note: xy = [shape_id, x0, y0, x1, y1, ..., xk, yk]
-_via_file_annotator.prototype._draw = function(ctx, xy, is_selected) {
+_via_file_annotator.prototype._draw = function(ctx, xy, is_selected, bcolor) {
   var shape_id = xy[0];
   switch( shape_id ) {
   case _VIA_RSHAPE.POINT:
     this._draw_point_region(ctx, xy[1], xy[2], is_selected );
     break;
   case _VIA_RSHAPE.RECTANGLE:
-    this._draw_rect_region(ctx, xy[1], xy[2], xy[3], xy[4], is_selected );
+    this._draw_rect_region(ctx, xy[1], xy[2], xy[3], xy[4], is_selected, bcolor );
     break;
   case _VIA_RSHAPE.EXTREME_RECTANGLE:
-    this._draw_extreme_rectangle_region(ctx, xy, is_selected );
+    this._draw_extreme_rectangle_region(ctx, xy, is_selected, bcolor );
     break;
   case _VIA_RSHAPE.CIRCLE:
-    this._draw_circle_region(ctx, xy[1], xy[2], xy[3], is_selected );
+    this._draw_circle_region(ctx, xy[1], xy[2], xy[3], is_selected, bcolor );
     break;
   case _VIA_RSHAPE.EXTREME_CIRCLE:
-    this._draw_extreme_circle_region(ctx, xy, is_selected );
+    this._draw_extreme_circle_region(ctx, xy, is_selected, bcolor );
     break;
   case _VIA_RSHAPE.ELLIPSE:
-    this._draw_ellipse_region(ctx, xy[1], xy[2], xy[3], xy[4], is_selected );
+    this._draw_ellipse_region(ctx, xy[1], xy[2], xy[3], xy[4], is_selected, bcolor );
     break;
   case _VIA_RSHAPE.EXTREME_BOX:
-    this._draw_extreme_box_region(ctx, xy, is_selected);
+    this._draw_extreme_box_region(ctx, xy, is_selected, bcolor);
     break;
   case _VIA_RSHAPE.LINE:
   case _VIA_RSHAPE.POLYGON:
   case _VIA_RSHAPE.POLYLINE:
-    this._draw_polygon_region(ctx, xy, is_selected, shape_id);
+    this._draw_polygon_region(ctx, xy, is_selected, shape_id, bcolor);
     break;
   default:
     console.warn('_via_file_annotator._draw() : shape_id=' + shape_id + ' not implemented');
@@ -2397,9 +2405,9 @@ _via_file_annotator.prototype._draw_point = function(ctx, cx, cy, r) {
   ctx.closePath();
 }
 
-_via_file_annotator.prototype._draw_rect_region = function(ctx, x, y, w, h, is_selected) {
+_via_file_annotator.prototype._draw_rect_region = function(ctx, x, y, w, h, is_selected, bcolor) {
+  ctx.strokeStyle = bcolor;
   if (is_selected) {
-    ctx.strokeStyle = this.conf.SEL_REGION_BOUNDARY_COLOR;
     ctx.lineWidth   = this.conf.SEL_REGION_LINE_WIDTH;
     this._draw_rect(ctx, x, y, w, h);
     ctx.stroke();
@@ -2409,7 +2417,6 @@ _via_file_annotator.prototype._draw_rect_region = function(ctx, x, y, w, h, is_s
     ctx.fill();
     ctx.globalAlpha = 1.0;
   } else {
-    ctx.strokeStyle = this.conf.REGION_BOUNDARY_COLOR;
     ctx.lineWidth   = this.conf.REGION_LINE_WIDTH;
     this._draw_rect(ctx, x, y, w, h);
     ctx.stroke();
@@ -2425,9 +2432,9 @@ _via_file_annotator.prototype._draw_rect = function(ctx, x, y, w, h) {
   ctx.closePath();
 }
 
-_via_file_annotator.prototype._draw_circle_region = function(ctx, cx, cy, r, is_selected) {
+_via_file_annotator.prototype._draw_circle_region = function(ctx, cx, cy, r, is_selected, bcolor) {
+  ctx.strokeStyle = bcolor;
   if (is_selected) {
-    ctx.strokeStyle = this.conf.SEL_REGION_BOUNDARY_COLOR;
     ctx.lineWidth   = this.conf.SEL_REGION_LINE_WIDTH;
     this._draw_circle(ctx, cx, cy, r);
     ctx.stroke();
@@ -2437,7 +2444,6 @@ _via_file_annotator.prototype._draw_circle_region = function(ctx, cx, cy, r, is_
     ctx.fill();
     ctx.globalAlpha = 1.0;
   } else {
-    ctx.strokeStyle = this.conf.REGION_BOUNDARY_COLOR;
     ctx.lineWidth   = this.conf.REGION_LINE_WIDTH;
     this._draw_circle(ctx, cx, cy, r);
     ctx.stroke();
@@ -2450,9 +2456,9 @@ _via_file_annotator.prototype._draw_circle = function(ctx, cx, cy, r) {
   ctx.closePath();
 }
 
-_via_file_annotator.prototype._draw_ellipse_region = function(ctx, cx, cy, rx, ry, is_selected) {
+_via_file_annotator.prototype._draw_ellipse_region = function(ctx, cx, cy, rx, ry, is_selected, bcolor) {
+  ctx.strokeStyle = bcolor;
   if (is_selected) {
-    ctx.strokeStyle = this.conf.SEL_REGION_BOUNDARY_COLOR;
     ctx.lineWidth   = this.conf.SEL_REGION_LINE_WIDTH;
     this._draw_ellipse(ctx, cx, cy, rx, ry);
     ctx.stroke();
@@ -2462,7 +2468,6 @@ _via_file_annotator.prototype._draw_ellipse_region = function(ctx, cx, cy, rx, r
     ctx.fill();
     ctx.globalAlpha = 1.0;
   } else {
-    ctx.strokeStyle = this.conf.REGION_BOUNDARY_COLOR;
     ctx.lineWidth   = this.conf.REGION_LINE_WIDTH;
     this._draw_ellipse(ctx, cx, cy, rx, ry);
     ctx.stroke();
@@ -2521,12 +2526,12 @@ _via_file_annotator.prototype._extreme_to_rshape = function(xy, shape_id) {
   }
 }
 
-_via_file_annotator.prototype._draw_extreme_rectangle_region = function(ctx, xy, is_selected) {
+_via_file_annotator.prototype._draw_extreme_rectangle_region = function(ctx, xy, is_selected, bcolor) {
   var n = xy.length;
   var ebox = this._extreme_to_rshape(xy, _VIA_RSHAPE.EXTREME_RECTANGLE);
 
+  ctx.strokeStyle = bcolor;
   if ( is_selected ) {
-    ctx.strokeStyle = this.conf.SEL_REGION_BOUNDARY_COLOR;
     ctx.lineWidth   = this.conf.SEL_REGION_LINE_WIDTH;
     this._draw_rect(ctx, ebox[1], ebox[2], ebox[3], ebox[4]);
     ctx.stroke();
@@ -2536,7 +2541,6 @@ _via_file_annotator.prototype._draw_extreme_rectangle_region = function(ctx, xy,
     ctx.fill();
     ctx.globalAlpha = 1.0;
   } else {
-    ctx.strokeStyle = this.conf.REGION_BOUNDARY_COLOR;
     ctx.lineWidth   = this.conf.REGION_LINE_WIDTH;
     this._draw_rect(ctx, ebox[1], ebox[2], ebox[3], ebox[4]);
     ctx.stroke();
@@ -2550,12 +2554,12 @@ _via_file_annotator.prototype._draw_extreme_rectangle_region = function(ctx, xy,
   }
 }
 
-_via_file_annotator.prototype._draw_extreme_circle_region = function(ctx, xy, is_selected) {
+_via_file_annotator.prototype._draw_extreme_circle_region = function(ctx, xy, is_selected, bcolor) {
   var n = xy.length;
   if ( n === 7 ) {
-  var ebox = this._extreme_to_rshape(xy, _VIA_RSHAPE.EXTREME_CIRCLE);
+    var ebox = this._extreme_to_rshape(xy, _VIA_RSHAPE.EXTREME_CIRCLE);
+    ctx.strokeStyle = bcolor;
     if ( is_selected ) {
-      ctx.strokeStyle = this.conf.SEL_REGION_BOUNDARY_COLOR;
       ctx.lineWidth   = this.conf.SEL_REGION_LINE_WIDTH;
       this._draw_circle(ctx, ebox[1], ebox[2], ebox[3]);
       ctx.stroke();
@@ -2565,7 +2569,6 @@ _via_file_annotator.prototype._draw_extreme_circle_region = function(ctx, xy, is
       ctx.fill();
       ctx.globalAlpha = 1.0;
     } else {
-      ctx.strokeStyle = this.conf.REGION_BOUNDARY_COLOR;
       ctx.lineWidth   = this.conf.REGION_LINE_WIDTH;
       this._draw_circle(ctx, ebox[1], ebox[2], ebox[3]);
       ctx.stroke();
@@ -2580,9 +2583,9 @@ _via_file_annotator.prototype._draw_extreme_circle_region = function(ctx, xy, is
   }
 }
 
-_via_file_annotator.prototype._draw_polygon_region = function(ctx, pts, is_selected, shape_id) {
+_via_file_annotator.prototype._draw_polygon_region = function(ctx, pts, is_selected, shape_id, bcolor) {
+  ctx.strokeStyle = bcolor;
   if ( is_selected ) {
-    ctx.strokeStyle = this.conf.SEL_REGION_BOUNDARY_COLOR;
     ctx.lineWidth   = this.conf.SEL_REGION_LINE_WIDTH;
     this._draw_polygon(ctx, pts);
     if ( shape_id === _VIA_RSHAPE.POLYGON ) {
@@ -2595,7 +2598,6 @@ _via_file_annotator.prototype._draw_polygon_region = function(ctx, pts, is_selec
     ctx.fill();
     ctx.globalAlpha = 1.0;
   } else {
-    ctx.strokeStyle = this.conf.REGION_BOUNDARY_COLOR;
     ctx.lineWidth   = this.conf.REGION_LINE_WIDTH;
     this._draw_polygon(ctx, pts);
     if ( shape_id === _VIA_RSHAPE.POLYGON ) {
@@ -2637,7 +2639,6 @@ _via_file_annotator.prototype._draw_control_point = function(ctx, cx, cy) {
   ctx.globalAlpha = 1.0;
   ctx.fill();
 }
-
 
 //
 // region draw enable/disable
@@ -2872,12 +2873,13 @@ _via_file_annotator.prototype._smetadata_update = function() {
     header.appendChild(th)
     table.appendChild(header);
 
+    const mid = this.selected_mid_list[0];
+
     // show value of each attribute
     var tbody = document.createElement('tbody');
     var tr = document.createElement('tr');
     tr.setAttribute('data-mid', mid);
 
-    var mid = this.selected_mid_list[0];
     var aid;
     for ( var aindex in aid_list ) {
       aid = aid_list[aindex];
@@ -2964,6 +2966,8 @@ _via_file_annotator.prototype._metadata_attribute_io_html_element = function(mid
     if ( typeof(aval) === 'undefined' ) {
       aval = dval;
     }
+    el.setAttribute('data-mid', mid);
+    el.setAttribute('data-aid', aid);
 
     var option_selected = false;
     for ( var oid in this.d.store.attribute[aid].options ) {
@@ -2980,9 +2984,9 @@ _via_file_annotator.prototype._metadata_attribute_io_html_element = function(mid
     // gather all options dynamically added by user and show in
     // dropdown (feature requested by EpicKitchens team at Bristol)
     var user_added_options = [];
-    for ( var mid in this.d.store.metadata ) {
-      if ( aid in this.d.store.metadata[mid]['av'] ) {
-        var ovalue = this.d.store.metadata[mid]['av'][aid];
+    for ( const mid_i in this.d.store.metadata ) {
+      if ( aid in this.d.store.metadata[mid_i]['av'] ) {
+        var ovalue = this.d.store.metadata[mid_i]['av'][aid];
         if ( !user_added_options.includes(ovalue) ) {
           user_added_options.push(ovalue);
         }
