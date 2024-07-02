@@ -1,6 +1,22 @@
 ## [3.0.X] - not release yet
  * @todo Annotate an ellipse with five clicks on the border (https://gitlab.com/vgg/via/-/issues/279)
 
+## [3.0.13] - 02-July-2024
+ * add support for SVG which is useful for annotating text rendered by an SVG image
+ * show attribute values added by user in the dropdown menu of a spatial region selected on a video frame (requested by EpicKitchens team at Bristol)
+ * improve rendering of video frame region label
+ * video frame regions are coloured based on their video timeline metadata assignment (requested by EpicKitchens team at Bristol)
+
+## [3.0.12] - 14-July-2023
+ * pair annotator keyboard handler now only responds to ArrowRight and ArrowLeft (instead of all keystrokes)
+ * Added 'Filter By Region Attribute' as dropdown entry to filter images by attribute field
+ * (image annotator) added new shortcut keys to toggle boundary region, magnifier tool, zoom
+ * (bugfix) subtitle-annotator: only show subtitles for current video in the subtitle text editor (top-left)
+ * increased point selection tolerance (from 5px to 10px) to avoid erroneously creating point regions when one wants to select a point region to delete
+ * improved VIA pack scripts
+ * use https to connect to shared project server
+ * various other bug fixes
+
 ## [3.0.11] - 08-October-2021
  * (subtitle annotator) fixed issue 361 by updating existing video cues instead of adding new ones
  * attributes of temporal segments can now be updated by selecting a temporal segment
@@ -104,4 +120,3 @@
  * annotations can be exported in CSV format
  * to reduce cognitive load on human annotators, VIA3 support for attributes of different types (plain text, drop down, radio, checkbox)
  * self contained demo for audio and video annotation
-
